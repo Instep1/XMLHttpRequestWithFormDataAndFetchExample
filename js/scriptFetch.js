@@ -8,9 +8,36 @@ const message = {
     failure: 'Что-то пошло не так...'
 }
 
-postData(form);
+bindPostData(form);
 
-function postData(form) {
+const postData = async (url, data) => {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json'
+        },
+        body: data
+    });
+
+    return await res.json();
+}
+
+const getResource = async (url) => {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+    }
+
+    return await res.json();
+}
+
+getResource('http://localhost:3000/menu')
+    .then(data => {
+        data.forEach(obj => console.log(obj));
+    })
+
+function bindPostData(form) {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -19,26 +46,14 @@ function postData(form) {
         statusMessage.textContent = message.loading;
         form.append(statusMessage);
 
-
-        // request.setRequestHeader('Content-type', 'application/json');
         const formData = new FormData(form);
 
         
 
-        const object = {};   // перебор массива formData и формирование, на его основе объекта, который в дальнейшем преобразуется в json, для отправки на сервер
-        formData.forEach(function(value, key){
-            object[key] = value;
-        });
+        const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
 
-        fetch('server.php', {
-            method: 'POST',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify(object)
-        })
-        .then(data => data.text())
+        postData('http://localhost:3000/requests', json)
         .then(data => {
             console.log(data);
             statusMessage.textContent = message.success;
